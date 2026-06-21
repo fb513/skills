@@ -1,0 +1,4 @@
+interface:
+  display_name: "蓝湖高保真还原"
+  short_description: "蓝湖设计稿到 uni-app 小程序的高保真还原、OSS 资源上传与返查"
+  default_prompt: "Use $lanhu-uniapp-pixel-restore to restore this Lanhu design into the current uni-app mini-program page, upload slices to OSS, and run a visual check loop."
