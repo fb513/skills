@@ -30,6 +30,26 @@ Spring Boot + MyBatis-Plus 项目的编码规范。
 
 # 架构分层规范
 
+## 依赖方向总则
+- **主分层固定为 Controller -> Service -> Manager -> Mapper**: Controller 只调用 Service；Service 承担主要业务流程、权限校验、事务边界、数据转换和多个下层能力编排；Manager 只在确有必要抽取可复用业务能力、缓存、外部资源、跨 Service 复用协作时存在；Mapper 只访问数据库。
+- **Service 可以直接访问 Mapper**: 简单 CRUD、单一业务流程、没有跨场景复用价值的逻辑直接放在 Service 中，不为了“凑层级”强行创建 Manager。
+- **禁止同级业务层相互依赖**: 同一顶级业务包内的 Spring Bean 不互相依赖，例如 `service -> service`、`manager -> manager`、`api -> api` 均禁止。多个 Manager 的编排必须放到 Service；需要复用的纯逻辑抽到 `util` 或无 Spring Bean 的领域工具类。
+- **禁止反向依赖**: 下层不得依赖上层，例如 `manager -> service`、`mapper -> service/manager/controller` 均禁止。
+- **禁止新增额外业务层**: 不新增 `component`、`support`、`facade` 等顶级业务包来绕开同层依赖。需要复用且带基础设施协作的能力放 `manager`；纯计算、规范化、文本处理等无状态逻辑放 `util`；业务编排放 `service`。
+- **允许基础横切依赖**: 各层可以依赖 `model`、`entity`、`enums`、`exception`、`util` 等基础包；`config`、`interceptor` 作为框架集成层按 Spring 配置需要依赖。
+- **DTO 放置规则**: 请求/响应 DTO 必须放在 `model` 包，禁止定义在 Controller 内后被 Service/Manager 引用。
+
+### 允许的主要依赖方向
+
+| 来源层 | 允许依赖 |
+|--------|----------|
+| `controller` | `service`、`model`、`interceptor` 注解、`exception` |
+| `service` | `manager`、`mapper`、`api`、`model`、`entity`、`enums`、`exception`、`util` |
+| `manager` | `mapper`、`api`、`model`、`entity`、`enums`、`exception`、`util`、`config` |
+| `api` | `config`、`model`、`exception`、`util` |
+| `mapper` | `entity`、`model`、`enums` |
+| `inner` | `service`、`model`、`interceptor` 注解、`exception` |
+
 ## Controller 层
 - **职责**: 参数校验和调用 Service 层
 - **禁止**: 包含业务逻辑判断
@@ -39,9 +59,14 @@ Spring Boot + MyBatis-Plus 项目的编码规范。
 - **接口路径风格**: 不使用标准 RESTful 风格的路径变量接口，禁止使用 `@PathVariable`；详情、删除、取消等操作使用明确动作路径和 query/body 参数，例如 `GET /xxx/detail?id=1`、`POST /xxx/cancel`
 
 ## Service 层
-- **职责**: 处理业务逻辑和数据转换
+- **职责**: 处理主要业务逻辑、权限校验、事务边界、数据转换和多个 Manager/Mapper/API 的编排
 - **异常处理**: 不做通用异常捕获（由 GlobalExceptionHandler 统一处理）
 - **数据转换**: Model/DTO 转换代码放在对应类中作为静态方法
+
+## Manager 层
+- **职责**: 抽取跨 Service 复用的业务能力，封装缓存、外部资源、语音、OSS、提示词、检索、通知、同步等可复用协作能力
+- **禁止**: 承担一次性接口业务流程、替代 Service 做入口编排、依赖其他 Manager
+- **取舍**: 如果逻辑只被一个 Service 使用且不封装缓存/外部资源/复用协作，优先留在 Service；如果只是纯计算或文本规范化，放到 `util` 静态工具类
 
 ## Mapper 层
 - **职责**: 仅专注数据库操作
@@ -165,6 +190,15 @@ List<UserResp> list = JsonUtils.parseJsonToList(json, UserResp.class);
 
 ---
 
+# 日期时间规范
+
+## 使用原则
+- 日期时间格式化、解析、时间戳转换、日期差计算等通用日期操作统一收口到 `DateUtils`，业务代码不要散落 `DateTimeFormatter.ofPattern(...)`、`LocalDate.parse(...)`、`LocalDateTime.parse(...)`、`ChronoUnit` 等重复逻辑。
+- 业务文案和业务状态判断留在对应业务类中；只有可复用的日期/时间展示、转换和计算逻辑放入 `DateUtils`。
+- 新增日期展示口径时，优先扩展 `DateUtils` 的明确命名方法或常量，并在调用方复用。
+
+---
+
 # 安全规范与文档规范
 
 ## 安全规范
@@ -258,11 +292,11 @@ List<OrderWithUserResp> selectPendingOrdersOfActiveUsers();
 
 ```java
 LambdaQueryWrapper<ArticleEntity> wrapper = new LambdaQueryWrapper<ArticleEntity>()
-    .select(ArticleEntity::getId, ArticleEntity::getTitle, ArticleEntity::getCreatedAt);
+        .select(ArticleEntity::getId, ArticleEntity::getTitle, ArticleEntity::getCreatedAt);
 if (maxId != null && maxId > 0) {
-    wrapper.lt(ArticleEntity::getId, maxId);
+        wrapper.lt(ArticleEntity::getId, maxId);
 }
-wrapper.orderByDesc(ArticleEntity::getId).last("LIMIT " + pageSize);
+        wrapper.orderByDesc(ArticleEntity::getId).last("LIMIT " + pageSize);
 ```
 
 ---
