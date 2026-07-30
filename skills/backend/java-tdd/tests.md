@@ -14,31 +14,27 @@
 
 ## 推荐结构
 
-使用 JUnit 5 和 Mockito，直接测试 Service 或 Manager 的公共方法：
+使用 JUnit 5 和 Mockito，直接测试 Service 或 Manager 的公共方法。下面的类型名均为占位符，落地时替换为当前项目已有类型：
 
 ```java
 @ExtendWith(MockitoExtension.class)
-class OrderStatisticsManagerTest {
+class ItemStatisticsManagerTest {
 
     @Mock
-    private OrderMapper orderMapper;
+    private ItemRepository itemRepository;
 
     @InjectMocks
-    private OrderStatisticsManager orderStatisticsManager;
+    private ItemStatisticsManager itemStatisticsManager;
 
     @Test
-    void 无导师的正常服务单应计入待分配统计() {
-        Order unassignedOrder = new Order()
-                .setOrderStatus(OrderStatus.NORMAL.getCode())
-                .setTeacherId(null);
-        Order assignedOrder = new Order()
-                .setOrderStatus(OrderStatus.NORMAL.getCode())
-                .setTeacherId(10L);
-        when(orderMapper.selectList(any())).thenReturn(List.of(unassignedOrder, assignedOrder));
+    void 符合条件的条目应计入统计() {
+        Item eligibleItem = new Item().setEligible(true);
+        Item excludedItem = new Item().setEligible(false);
+        when(itemRepository.findAll(any())).thenReturn(List.of(eligibleItem, excludedItem));
 
-        OrderStatisticResp result = orderStatisticsManager.statistics(100L);
+        ItemStatistic result = itemStatisticsManager.statistics();
 
-        assertEquals(1, result.getUnassignedCount());
+        assertEquals(1, result.getEligibleCount());
     }
 }
 ```
@@ -49,17 +45,17 @@ class OrderStatisticsManagerTest {
 
 ```java
 @Test
-void 已结束排期不应被日常刷新() {
-    Schedule endedSchedule = new Schedule()
+void 已结束资源不应被刷新() {
+    Resource endedResource = new Resource()
             .setEndTime(LocalDateTime.of(2026, 7, 1, 0, 0));
-    when(scheduleMapper.selectById(100L)).thenReturn(endedSchedule);
+    when(resourceRepository.findById(100L)).thenReturn(endedResource);
 
-    assertThrows(WebBaseException.class,
-            () -> scheduleService.refresh(100L, false));
+    assertThrows(BusinessException.class,
+            () -> resourceService.refresh(100L, false));
 }
 ```
 
-若异常包含稳定的业务码，同时断言业务码；不要依赖容易变化的完整异常文案。
+`BusinessException` 仅表示项目定义的业务异常类型。若异常包含稳定的业务码，同时断言业务码；不要依赖容易变化的完整异常文案。
 
 ## 验证写入边界的业务数据
 
@@ -67,14 +63,14 @@ void 已结束排期不应被日常刷新() {
 
 ```java
 @Test
-void 退款后应将服务单状态更新为已退款() {
-    when(orderMapper.selectById(100L)).thenReturn(normalOrder());
+void 取消后应将资源状态更新为已取消() {
+    when(resourceRepository.findById(100L)).thenReturn(activeResource());
 
-    orderService.refund(100L);
+    resourceService.cancel(100L);
 
-    ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
-    verify(orderMapper).updateById(captor.capture());
-    assertEquals(OrderStatus.REFUNDED.getCode(), captor.getValue().getOrderStatus());
+    ArgumentCaptor<Resource> captor = ArgumentCaptor.forClass(Resource.class);
+    verify(resourceRepository).save(captor.capture());
+    assertEquals(ResourceStatus.CANCELLED, captor.getValue().getStatus());
 }
 ```
 
@@ -83,26 +79,26 @@ void 退款后应将服务单状态更新为已退款() {
 ## 不推荐：启动完整环境
 
 ```java
-@SpringBootTest
-class ScheduleStatisticsTest {
+@SpringBootTest // 或当前框架对应的完整应用上下文测试注解
+class ItemStatisticsIntegrationTest {
 
     @Test
     void testStatistics() {
-        Long scheduleId = 1232L;
-        System.out.println(statisticsService.statistics(scheduleId));
+        Long itemId = 1232L;
+        System.out.println(itemService.statistics(itemId));
     }
 }
 ```
 
-问题：依赖现有数据，没有明确期望值，失败原因可能来自数据库、Redis、Nacos 或外部服务，无法形成快速红绿循环。
+问题：依赖现有数据，没有明确期望值，失败原因可能来自数据库、缓存、配置中心或外部服务，无法形成快速红绿循环。
 
 ## 不推荐：只验证内部调用
 
 ```java
 @Test
 void testDelete() {
-    scheduleService.delete(100L);
-    verify(scheduleMapper).deleteById(100L);
+    itemService.delete(100L);
+    verify(itemRepository).deleteById(100L);
 }
 ```
 
@@ -115,9 +111,9 @@ void testDelete() {
 ## 不推荐：复制生产算法
 
 ```java
-int expected = orders.stream()
-        .filter(order -> order.getTeacherId() == null)
-        .filter(order -> order.getOrderStatus() == 1)
+int expected = items.stream()
+        .filter(Item::isEligible)
+        .filter(item -> item.getStatus() == 1)
         .toList()
         .size();
 assertEquals(expected, result.getUnassignedCount());
