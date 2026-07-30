@@ -1,5 +1,5 @@
 ---
-name: tdd
+name: java-tdd
 description: 面向本仓库 Java 21 / Spring Boot 业务代码的轻量测试驱动开发。用于新增功能、修复缺陷、重构业务规则或补充回归测试；默认在 Service、Manager、工具类或模型转换的公共方法 seam 上使用 JUnit 5 和 Mockito 编写快速行为测试，绕过 Spring Context、Controller、数据库、Redis、MQ 和外部接口。只有改动触及这些边界本身时，才要求记录并执行额外的专项验证。
 ---
 
@@ -21,7 +21,7 @@ description: 面向本仓库 Java 21 / Spring Boot 业务代码的轻量测试�
 默认直接实例化被测对象，使用 JUnit 5 与 Mockito，不使用 `@SpringBootTest`。简要说明本次选择的 seam；只有多个 seam 会显著改变测试成本或保障范围时才询问用户。
 
 ## 边界判断
-
+[SKILL.md](SKILL.md)
 先判断改动是否修改了边界本身：
 
 | 改动 | 日常 TDD | 额外验证 |
