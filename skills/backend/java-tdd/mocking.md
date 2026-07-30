@@ -6,9 +6,12 @@
 | --- | --- | --- |
 | MyBatis Mapper | Mock | 验证上层业务规则，不验证 SQL |
 | RedisTemplate | Mock | 验证命中、未命中和锁分支 |
-| Feign、RestTemplate | Mock | 返回明确响应或抛出边界异常 |
+| Feign、RestTemplate、RestClient、OkHttp | 优先 Mock 仓库 adapter | 返回明确响应或抛出边界异常 |
+| Nacos、配置中心 | 固定配置或 Mock 配置边界 | 不连接共享配置中心 |
 | RabbitTemplate、RocketMQ Producer | Mock | 捕获消息的类型和关键业务字段 |
 | OSS、微信 SDK | Mock | 不访问真实账号和公网 |
+| `TextModelApi`、`EmbeddingModelApi`、`SpeechApi` | Mock 逻辑能力接口 | 不直接 Mock 供应商 SDK 的内部实现 |
+| `EsSearchClient`、Rerank、RAG 外部边界 | Mock | 验证检索编排和业务分支，不验证真实索引 |
 | 时间、随机数 | 固定值或可注入替身 | 保持测试确定性 |
 | 纯业务 Manager、Util | 真实对象 | 避免测试内部实现结构 |
 | 封装外部资源的 Manager | 可 Mock | 将它视为 Service 的外部 seam |
@@ -39,8 +42,10 @@ class ScheduleServiceTest {
 不要因为类型名以 `Manager` 结尾就一律 Mock：
 
 - 承载统计口径、权限范围或状态规则：优先使用真实对象。
-- 封装 Redis、OSS、微信、外部 HTTP 或消息发送：在 Service 测试中可以 Mock。
+- 封装 Redis、OSS、微信、模型/RAG、外部 HTTP 或消息发送：在 Service 测试中可以 Mock。
 - Manager 自身正在被测试：Mock 它的 Mapper 和外部资源，直接断言 Manager 的公共行为。
+
+不要仅因为某个协作者是自有类、依赖较多或 Mock 更容易，就把它替换成测试替身。先判断它承载的是业务规则还是系统边界；Mock 前者会把测试绑定到内部编排，Mock 后者才能隔离不确定环境。
 
 ## 验证副作用
 
@@ -68,7 +73,7 @@ assertEquals(RewardType.SUN, captor.getValue().getRewardType());
 
 ## 边界改动
 
-Mock 只能证明调用方行为，不能证明边界实现正确。修改 MyBatis XML、Redis 操作、Feign 配置、消息路由或事务时：
+Mock 只能证明调用方行为，不能证明边界实现正确。修改 MyBatis XML、Redis 操作、Nacos/Feign/RestTemplate/RestClient/OkHttp 配置、模型或 RAG adapter、消息路由、事务、动态数据源、SSE 或并发控制时：
 
 1. 保留快速行为测试，验证上层业务语义。
 2. 在专项验证中使用真实或等价环境验证边界。
