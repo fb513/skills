@@ -1,0 +1,4 @@
+interface:
+  display_name: "TDD"
+  short_description: "Drive Java business changes with fast behavior tests"
+  default_prompt: "Use $tdd to implement this Java business change with fast behavior-first tests."

@@ -1,4 +1,4 @@
 interface:
   display_name: "蓝湖高保真还原"
-  short_description: "蓝湖设计稿到 uni-app 小程序的高保真还原、OSS 资源上传与返查"
-  default_prompt: "Use $lanhu-uniapp-pixel-restore to restore this Lanhu design into the current uni-app mini-program page, upload slices to OSS, and run a visual check loop."
+  short_description: "蓝湖设计稿到 uni-app 小程序的规格优先还原、OSS 资源上传与收尾返查"
+  default_prompt: "使用 $lanhu-uniapp-pixel-restore：先按蓝湖结构化设计规格和项目代码实现 uni-app 小程序页面，上传必要切图到 OSS，完成静态核对后再做微信小程序截图收尾验证。"
