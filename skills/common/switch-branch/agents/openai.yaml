@@ -1,0 +1,7 @@
+interface:
+  display_name: "切换并合并分支"
+  short_description: "安全执行分支切换、分支合并、结果验证并恢复原分支流程"
+  default_prompt: "使用 $switch-branch 将当前分支安全合并到目标分支，并在完成后切回原分支。"
+
+policy:
+  allow_implicit_invocation: false
