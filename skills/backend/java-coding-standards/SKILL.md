@@ -48,7 +48,6 @@ Spring Boot + MyBatis-Plus 项目的编码规范。
 | `manager` | `mapper`、`api`、`model`、`entity`、`enums`、`exception`、`util`、`config` |
 | `api` | `config`、`model`、`exception`、`util` |
 | `mapper` | `entity`、`model`、`enums` |
-| `inner` | `service`、`model`、`interceptor` 注解、`exception` |
 
 ## Controller 层
 - **职责**: 参数校验和调用 Service 层
@@ -305,7 +304,7 @@ if (maxId != null && maxId > 0) {
 # Redis 缓存规范
 
 ### Key 命名
-- 格式：`业务域:实体:标识`，如 `prompt:sell:1`、`fxy:english:topic:123`
+- 格式：`业务域:实体:标识`
 - 全小写，冒号分隔层级
 
 ### 使用原则
