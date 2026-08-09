@@ -143,6 +143,7 @@ public class UserResp {
 - 简单延迟使用 `AsyncUtils.sleep()`，不直接调用 `Thread.sleep()`
 
 ## 方法说明
+- `AsyncUtils.execute(Runnable, String taskName)` — 执行异步任务
 - `AsyncUtils.runAsync(Runnable)` — 无返回值的异步任务
 - `AsyncUtils.supplyAsync(Supplier<T>)` — 有返回值的异步任务
 - `AsyncUtils.waitAll(CompletableFuture<?>...)` — 等待多个异步任务全部完成
@@ -247,7 +248,7 @@ mapper.selectOne(new LambdaQueryWrapper<OrderEntity>()
 ```
 
 - **查询返回类型**: 返回实体类或 DTO 类，**禁止使用 `Map<String, Object>`**
-- **批量新增**: 使用 MyBatis-Plus 3.5.11+ 的 `BaseMapper.insert(Collection)` 批量插入（3.5.4 新增，接受 List），不要手写 SQL
+- **批量新增**: 使用 MyBatis-Plus 3.5.4+ 的 `BaseMapper.insert(Collection)` 批量插入（3.5.4 新增，接受 List），不要手写 SQL
 
 ```java
 mapper.insert(entityList);
