@@ -105,7 +105,7 @@ public class UserResp {
 - **响应格式**: 使用统一的通用响应格式 (CommResp)
 - **自定义异常**: 业务异常抛出带有明确错误码的自定义异常
 - **全局处理**: Controller 层异常由全局异常处理器统一处理
-- **Service 层**: 不做通用异常捕获；@Async 方法例外，必须自行 catch 并通过 SseEmitter 通知客户端
+- **Service 层**: 不做通用异常捕获；异步方法例外，必须自行 catch 并通过 SseEmitter 通知客户端
 
 ## 参数校验：纵深防御原则
 
@@ -320,7 +320,7 @@ if (maxId != null && maxId > 0) {
 
 ### 使用原则
 - 优先使用 `@Transactional` 注解声明式事务
-- 仅在无法使用 `@Transactional` 的场景（如 @Async 方法、跨线程操作、需要手动控制提交时机）使用 `TransactionUtils` 编程式事务
+- 仅在无法使用 `@Transactional` 的场景（如异步方法、跨线程操作、需要手动控制提交时机）使用 `TransactionUtils` 编程式事务
 - 事务边界放在 Service 层，Controller 和 Mapper 不管理事务
 
 ### @Transactional 注意事项
