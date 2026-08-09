@@ -254,7 +254,7 @@ mapper.selectOne(new LambdaQueryWrapper<OrderEntity>()
 mapper.insert(entityList);
 ```
 
-- **批量更新**: 使用 MyBatis-Plus 3.5.11+ 的 `BaseMapper.updateById(Collection)` 批量更新（3.5.4 新增，接受 List），不要手写 SQL
+- **批量更新**: 使用 MyBatis-Plus 3.5.4+ 的 `BaseMapper.updateById(Collection)` 批量更新（3.5.4 新增，接受 List），不要手写 SQL
 
 ```java
 List<Entity> entityList = ...;
