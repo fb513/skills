@@ -1,0 +1,3 @@
+interface:
+  display_name: "Java Coding Standards"
+  short_description: "Java backend conventions for Spring Boot and MyBatis-Plus"

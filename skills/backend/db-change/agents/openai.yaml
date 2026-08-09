@@ -1,0 +1,3 @@
+interface:
+  display_name: "DB Change"
+  short_description: "Change schema safely across every sync point"
