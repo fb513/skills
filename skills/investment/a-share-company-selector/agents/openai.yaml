@@ -1,0 +1,4 @@
+interface:
+  display_name: "A股公司研究器"
+  short_description: "研究A股公司价值来源、所有者收益、治理质量与估值区间"
+  default_prompt: "使用 $a-share-company-selector，比较行业内公司或研究指定A股公司，并给出质量状态、价值区间与失效条件。"

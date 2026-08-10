@@ -1,0 +1,4 @@
+interface:
+  display_name: "A股投资复盘器"
+  short_description: "复核投资假设，区分价值与价格并形成可验证的改进动作"
+  default_prompt: "使用 $a-share-investment-reviewer，对照原始记录与最新事实复盘A股投资，完成收益归因、错误诊断与规则回写。"

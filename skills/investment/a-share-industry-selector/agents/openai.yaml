@@ -1,0 +1,4 @@
+interface:
+  display_name: "A股行业筛选器"
+  short_description: "可审计地评估A股行业质量、当前机会、风险与研究优先级"
+  default_prompt: "使用 $a-share-industry-selector，基于可验证数据比较A股行业质量与当前机会，并给出公司研究入口。"

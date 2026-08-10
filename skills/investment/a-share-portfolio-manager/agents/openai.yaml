@@ -1,0 +1,4 @@
+interface:
+  display_name: "A股组合管理器"
+  short_description: "把合格研究转化为组合仓位区间、交易条件和共同风险控制"
+  default_prompt: "使用 $a-share-portfolio-manager，根据已通过的行业与公司研究制定A股组合角色、仓位区间、交易条件和风险地图。"

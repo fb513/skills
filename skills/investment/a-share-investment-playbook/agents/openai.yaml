@@ -1,0 +1,4 @@
+interface:
+  display_name: "A股价值投资总流程"
+  short_description: "协调行业、公司、组合和复盘阶段，形成可审计的投资闭环"
+  default_prompt: "使用 $a-share-investment-playbook，识别当前阶段并按统一门槛推进A股投资研究、组合执行与复盘。"
