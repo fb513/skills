@@ -309,7 +309,6 @@ if (maxId != null && maxId > 0) {
 - 全小写，冒号分隔层级
 
 ### 使用原则
-- 缓存操作统一放 Manager 层，Service 不直接操作 `RedisTemplate`
 - 设置合理过期时间，避免缓存永不过期
 - 缓存未命中时回退到数据库查询，不抛异常
 - 批量操作优先用 Pipeline
