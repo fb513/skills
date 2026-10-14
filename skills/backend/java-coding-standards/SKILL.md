@@ -22,6 +22,7 @@ Spring Boot + MyBatis-Plus 项目的编码规范。
 - 优先使用 `@Getter`、`@Setter` 等 Lombok 注解减少样板代码
 - Entity 类统一使用 `@Getter`、`@Setter`、`@ToString`、`@Accessors(chain = true)`
 - 避免在 Entity 类使用 `@Data`，防止自动生成的 `equals/hashCode` 引入隐性问题
+- Spring Bean 类使用 `@RequiredArgsConstructor` 生成全参构造方法，配合 `private final` 依赖字段实现构造方法注入（见"依赖注入规范"）
 
 ## 语言规范
 - 所有模型输入、输出和代码注释必须使用中文语言
@@ -48,6 +49,30 @@ Spring Boot + MyBatis-Plus 项目的编码规范。
 | `manager` | `mapper`、`api`、`model`、`entity`、`enums`、`exception`、`util`、`config` |
 | `api` | `config`、`model`、`exception`、`util` |
 | `mapper` | `entity`、`model`、`enums` |
+
+## 依赖注入规范
+- **必须使用构造方法注入**: 禁止 `@Autowired`/`@Resource` 字段注入和 Setter 注入
+- **使用 Lombok 构建全参构造方法**: 类上加 `@RequiredArgsConstructor`，依赖字段统一声明为 `private final`，由 Lombok 自动生成包含全部依赖的构造方法，无需手写构造代码
+- **字段修饰**: 依赖字段必须是 `private final`，禁止非 final 的可变依赖字段
+
+```java
+@Service
+@RequiredArgsConstructor
+public class OrderService {
+    // 依赖字段统一 private final，由 @RequiredArgsConstructor 生成全参构造方法
+    private final OrderMapper orderMapper;
+    private final PayManager payManager;
+}
+```
+
+```java
+// 错误示例：字段注入
+@Service
+public class OrderService {
+    @Autowired // 禁止
+    private OrderMapper orderMapper;
+}
+```
 
 ## Controller 层
 - **职责**: 参数校验和调用 Service 层
