@@ -5,11 +5,13 @@ description: "接口文档导出（手动触发）。仅在用户明确要求导
 
 # 接口文档导出
 
-按用户指定的提交范围，找出受影响的 Controller 与接口模型，调用 `tools/api-doc/ApiDocExporter.java` 重新导出 Markdown 文档。
+按用户指定的提交范围，找出受影响的 Controller 与接口模型，调用与本文件同目录的 `ApiDocExporter.java` 重新导出 Markdown 文档。
 
 ## 前提
 
 - 所有命令都在仓库根目录执行。
+- 工具随 skill 一起安装，与 `SKILL.md` 同目录，不依赖项目里有 `tools/` 副本；调用时用它的绝对路径。
+- 源码位置自动发现：递归查找项目下所有 `src/main/java`，不依赖模块名，`--dry-run` 输出里的 `[ * ] Class -> 相对路径` 可用来确认扫到了哪些模块。
 - 导出目录由仓库根 `.env.local` 的 `api-doc-out=<绝对路径>` 配置。工具报「未配置导出目录」时，让用户补配置，不要自行猜测或新建目录。
 - 导出目录是**独立 git 仓库**，与主仓库分开提交、分开推送。
 
@@ -42,7 +44,7 @@ service / manager / mapper 接口 / util / config / job / 测试 / MQ 改动不�
 ## 第三步：执行导出
 
 ```bash
-java --source 21 tools/api-doc/ApiDocExporter.java <路径或类名> [<路径或类名> ...]
+java --source 21 <skill 目录>/ApiDocExporter.java <路径或类名> [<路径或类名> ...]
 ```
 
 - 路径用仓库相对路径，一次可传多个。
