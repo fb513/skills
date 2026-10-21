@@ -1,0 +1,4 @@
+interface:
+  display_name: "接口文档导出"
+  short_description: "按 git 提交范围导出受影响的接口文档"
+  default_prompt: "使用 $api-doc-export，导出最近两次提交 / 与 master 差异 / 工作区改动涉及的接口文档。"
