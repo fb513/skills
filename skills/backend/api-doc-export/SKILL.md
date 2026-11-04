@@ -5,7 +5,7 @@ description: "接口文档导出（手动触发）。仅在用户明确要求导
 
 # 接口文档导出
 
-按用户指定的提交范围，找出受影响的 Controller 与接口模型，调用 `scripts/ApiDocExporter.java` 重新导出 Markdown 文档。
+按用户指定的提交范围，找出受影响的 Controller 与接口模型，调用 `scripts/ApiDocExporter.java` 重新导出 Markdown 文档，再按文档仓库中维护的业务层级归档。Java 工具负责生成内容；AI 负责给新业务归档并维护规则；`scripts/organize_api_docs.py` 负责确定性移动和校验。
 
 ## 前提
 
@@ -14,6 +14,9 @@ description: "接口文档导出（手动触发）。仅在用户明确要求导
 - 源码位置自动发现：递归查找项目下所有 `src/main/java`，不依赖模块名，`--dry-run` 输出里的 `[ * ] Class -> 相对路径` 可用来确认扫到了哪些模块。
 - 导出目录由仓库根 `.env.local` 的 `api-doc-out=<绝对路径>` 配置。工具报「未配置导出目录」时，让用户补配置，不要自行猜测或新建目录。
 - 导出目录是**独立 git 仓库**，与主仓库分开提交、分开推送。
+- 导出目录根部的 `.api-doc-layout.json` 是接口文档的分类规则和目录说明，随文档仓库提交。它已经承载现有的“端 → 业务模块”层级；不要另造一套目录命名。
+- 归档脚本位于本 Skill 的 `scripts/organize_api_docs.py`，不是文档仓库里的副本；分类配置才属于文档仓库。
+- Java 导出器必须先写到文档仓库之外的临时目录。不能直接写到文档仓库根目录，否则会产生平铺副本并绕过归档规则。
 
 ## 第一步：确定扫描范围
 
@@ -41,16 +44,39 @@ description: "接口文档导出（手动触发）。仅在用户明确要求导
 
 service / manager / mapper 接口 / util / config / job / 测试 / MQ 改动不需要导出。传了非 Controller 类时，工具会自动反查引用它的 Controller 一并导出；entity 影响面通常很大，先走 `--dry-run`。
 
-## 第三步：执行导出
+## 第三步：执行导出与 AI 归档
 
 ```bash
-java --source 21 <skill 目录>/scripts/ApiDocExporter.java <路径或类名> [<路径或类名> ...]
+java --source 21 <skill 目录>/scripts/ApiDocExporter.java --out <仓库之外的临时目录> <路径或类名> [<路径或类名> ...]
 ```
 
 - 路径用仓库相对路径，一次可传多个。
 - 参数超过 10 个或包含 entity 时，先加 `--dry-run` 看会导出的 Controller 清单，确认后再正式导出。
 - 只改字段名、字段注释、Javadoc 也要导出，文档内容直接来自源码。
 - 需要核对字段解析结果时用 `--dump-type <类名>`。
+
+导出成功后运行归档脚本：
+
+```bash
+python <skill 目录>/scripts/organize_api_docs.py \
+  --source <临时目录> \
+  --out <api-doc-out 目录> \
+  --json
+```
+
+脚本只按 `.api-doc-layout.json` 中的 `titleRules` 和 `rules` 做确定性分类，并检查同名文档、目标占用和一个文档命中多个目录等冲突。成功时才移动文件并重建根目录 `README.md`。
+
+### 新接口或新模块的 AI 归档
+
+脚本退出码为 `2` 时，JSON 的 `unresolved` 列出了没有匹配规则或存在冲突的文档。不要把它们移动到“待分类”目录，也不要带着未归档文件提交。逐份读取标题、所有 `**Path:**`、接口方法说明，并结合现有目录和本仓库的业务语境判断：
+
+1. 能归入已有模块时，在 `.api-doc-layout.json` 的 `rules` 中追加最具体的 `pathPrefix`；路径前缀应覆盖同类后续接口。
+2. 一个文档包含多个端、第三方接口或路径语义不能唯一决定目录时，在 `titleRules` 中追加标题规则，并用 `pathPrefixes` 记录它允许的路径范围。
+3. 确实是新业务时，先创建一个与现有编号和命名风格一致的目录，再新增规则；目录创建理由要能从文档标题或接口路径中说明。
+4. AI 维护的规则可附带 `reason`、`managedBy: "ai"` 和 `updatedAt` 字段，脚本会忽略这些说明字段。
+5. 重新运行归档脚本，直到 `unresolved` 为空；如果仍有语义冲突或无法在已有目录中做出可靠判断，暂停并向用户说明候选目录和依据。
+
+规则维护原则：优先增加最具体的路径前缀；不要用会吞掉多个业务的宽泛前缀覆盖已有规则；跨端文档优先用标题规则；规则变更和文档移动一起提交。
 
 ### 标题冲突检查（导出前必做）
 
@@ -59,7 +85,7 @@ java --source 21 <skill 目录>/scripts/ApiDocExporter.java <路径或类名> [<
 导出前对每个待导出的 Controller 检查一遍：
 
 1. 取它的类注释标题和 `@RequestMapping` 的路径前缀。
-2. 看导出目录是否已存在 `<标题>.md`。
+2. 在整个导出目录递归查找是否已存在 `<标题>.md`。
 3. 存在时看文件里的 `**Path:**` 前缀是不是当前 Controller 的前缀 —— 不同就是冲突，先别导出。
 
 冲突的处理顺序：
@@ -76,7 +102,7 @@ java --source 21 <skill 目录>/scripts/ApiDocExporter.java <路径或类名> [<
 - 「已导出 X.md（N 个接口）」里必须包含本次改动涉及的全部接口。
 - 「警告 N 条」要逐条确认属预期：未解析类型、非 CommResp 返回、文件名重复、未找到类。非预期告警要回到源码排查，不要直接忽略。
 - 抽查导出文件：本次新增/改名的字段、类型、注释是否已经出现在对应 Markdown 中。
-- 看导出目录 `git status --short`：只应出现本批次涉及的 `.md`。冒出不相关的 `.md` 改动、或某个文件 diff 大得离谱，基本就是同名标题把它覆盖了，按第三步的冲突处理还原重做。
+- 看导出目录 `git status --short`：允许出现本批次涉及的 `.md`、`.api-doc-layout.json` 和 `README.md`。冒出不相关的 `.md` 改动、或某个文件 diff 大得离谱，基本就是同名标题把它覆盖了，按标题冲突处理还原重做。
 
 ## 第五步：汇报与提交
 
@@ -93,9 +119,16 @@ java --source 21 <skill 目录>/scripts/ApiDocExporter.java <路径或类名> [<
 cd "<api-doc-out 目录>"
 git status --short          # 没有改动则跳过提交和推送
 git add -A
-git commit -F .commit-msg   # 提交信息取自 .commit-msg，通常为「文档更新」
+git commit -m "文档更新：<本批次改动概括>"
 git push
 ```
+
+提交信息由你根据本批次的实际改动现写，**不读取 `.commit-msg` 或其它外部文件**：
+
+- 写之前先看 `git diff --cached --stat`，按真实改动确认涉及哪些文档、接口是新增、修改还是删除。
+- 首行用 `文档更新：` 加一句话概括，例如 `文档更新：任务管理端新增导出接口，补充任务模板字段说明`。
+- 涉及多份文档时用多个 `-m` 追加正文，每条一行 `- <文件名>：<变化>`。
+- 只写 diff 能佐证的内容，不要凭源码猜业务背景。
 
 ## 常见问题
 
@@ -103,3 +136,4 @@ git push
 - 跨批次同名（没有告警）：导出后才发现某个既有文档的接口全变了/少了，就是标题撞车被覆盖，用 `git checkout` 还原并改标题。
 - 报「未找到类」：该文件不属于接口表面，从参数里剔除后重跑。
 - 修改了接口但没匹配到 controller/model 文件：确认是否只改了 entity 或 Mapper XML，按第二步补上对应文件。
+- 归档脚本报 `unmatched_paths`、`multiple_targets` 或 `title_scope_changed`：由 AI 读取 JSON 报告并维护 `.api-doc-layout.json`，不要把文档留在导出根目录，也不要创建临时“待分类”目录。
