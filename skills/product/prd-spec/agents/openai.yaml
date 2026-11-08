@@ -1,7 +1,7 @@
 interface:
   display_name: "PRD + Spec Handoff"
   short_description: "记账产品确认的事实，多轮拷问后产出 PRD 与功能规格"
-  default_prompt: "在已由 $prd-spec-iteration 初始化好的需求目录中，使用 $prd-spec：每轮对话后自动判断是否出现带倾向的表态，有就追加到 facts.md 并告知编号，不需要用户先说「记一下」。准备出文档时说「生成 PRD」，则先确认本轮与基准的关系（independent 独立需求 / derive 变更需求，通常已由 $prd-spec-iteration 问定，为 null 或与事实冲突时补判），再结合事实记录、当前聊天上下文、原型和基准 PRD 做完整整理，然后多轮拷问矛盾与空洞——每轮不超过 10 个问题，累计不超过 25 个，回答带出新缺口就继续下一轮，收敛后再生成 PRD 与功能规格：PRD 只写本轮新增、修改、废止的条目，已上线未改的不重复，改动要留前身 ID；最后按目标目录是否已有原型决定归档还是登记指向。"
+  default_prompt: "在已由 $prd-spec-iteration 初始化好的需求目录中，使用 $prd-spec：每轮对话后自动判断是否出现带倾向的表态，有就追加到 facts.md 并告知编号，不需要用户先说「记一下」。准备出文档时说「生成 PRD」，则先确认本轮与基准的关系（读 AGENTS.md 需求目录表里本轮那行的「基于」列：有编号是 derive，`—` 是 independent；整行缺失或与事实冲突时补判），再结合事实记录、当前聊天上下文、原型和基准 PRD 做完整整理，然后多轮拷问矛盾与空洞——每轮不超过 10 个问题，累计不超过 25 个，回答带出新缺口就继续下一轮，收敛后再生成 PRD 与功能规格：PRD 只写本轮新增、修改、废止的条目，已上线未改的不重复，改动要留前身 ID；目标目录里的 prototype.html 就是本轮基线原型，没有就说明本轮无原型，不记哈希、不登记指向。"
 
 policy:
   allow_implicit_invocation: false
