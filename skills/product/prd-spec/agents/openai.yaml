@@ -1,6 +1,6 @@
 interface:
-  display_name: "PRD + Spec Handoff"
-  short_description: "结合聊天上下文与原型做完整的需求整理和多轮拷问，产出本轮 PRD 及派生的功能需求规格。适用于首次需求、后续新增和已有需求变更。"
+  display_name: "PRD + Spec 生成"
+  short_description: "结合聊天上下文与原型做需求整理和多轮拷问，产出本轮 PRD 与派生功能规格，让开发结合已有代码和技术栈直接实现。适用于首次需求、后续新增和已有需求变更。"
 
 policy:
   allow_implicit_invocation: false
